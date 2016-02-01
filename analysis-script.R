@@ -78,34 +78,16 @@ for(airport in airports){
 write.csv(master.fr, 'master-fr.csv')
 
 #-----#
-#Now the same exercise for EasyJet
-master.u2 <- data.frame()
+#Now combine the two datasets
 
-airports <- eastern.europe
-dates <- (22:28)
-hours <- c(0, 6, 12, 18)
+master.df <- bind_rows(master.w6, master.fr)
 
-for(airport in airports){
-  for(date in dates){
-    for(hour in hours){
-      
-      url <- paste(paste(paste(paste(paste('https://api.flightstats.com/flex/flightstatus/rest/v2/json/airport/status', airport, sep = '/'), 'arr/2016/1', sep = '/'), date, sep = '/'), hour, sep = '/'), '?appId=#&appKey=#&utc=false&numHours=6&carrier=FR', sep = '')
-      segment <- fromJSON(url)
-      
-      if(length(segment$flightStatuses)!=0){
-        for(i in 1:length(segment$flightStatuses)) {
-          flight.date <- as.character(segment$request$date['interpreted'])
-          flight.num <- paste(segment$flightStatuses[[i]]$carrierFsCode, segment$flightStatuses[[i]]$flightNumber[1], sep = '')
-          flight.origin <- segment$flightStatuses[[i]]$departureAirportFsCode
-          flight.dest <- segment$flightStatuses[[i]]$arrivalAirportFsCode
-          flight.deptime <- as.character(segment$flightStatuses[[i]]$departureDate[1])
-          flight.arrtime <- as.character(segment$flightStatuses[[i]]$arrivalDate[1])
-          flight.eq <- as.character(segment$flightStatuses[[i]]$flightEquipment[1])
-          
-          temp <- data.frame(flight.date, flight.num, flight.origin, flight.dest, flight.deptime, flight.arrtime, flight.eq)
-          master.u2 <- bind_rows(master.u2, temp)
-        }
-      }
-    }
-  }
-}
+#More data wrangling
+#Format the date field correctly and figure out what day of the week the flight took place on
+
+master.df$flight.deptime <- as.POSIXct(master.df$flight.deptime, format = '%Y-%m-%dT%H:%M:%OS')
+master.df$flight.arrtime <- as.POSIXct(master.df$flight.arrtime, format = '%Y-%m-%dT%H:%M:%OS')
+master.df$weekday <- weekdays(master.df$flight.deptime, abbreviate = TRUE)
+
+try <- master.df %>% filter() %>% group_by(weekday) %>% summarise(flights = n())
+
