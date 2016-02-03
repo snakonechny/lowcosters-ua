@@ -89,5 +89,28 @@ master.df$flight.deptime <- as.POSIXct(master.df$flight.deptime, format = '%Y-%m
 master.df$flight.arrtime <- as.POSIXct(master.df$flight.arrtime, format = '%Y-%m-%dT%H:%M:%OS')
 master.df$weekday <- weekdays(master.df$flight.deptime, abbreviate = TRUE)
 
-try <- master.df %>% filter() %>% group_by(weekday) %>% summarise(flights = n())
+#one last piece - the API returned the wrong format of airport code (EPMO instaed of WMI for Modlin in Warsaw). We shall fix this
+master.df <- master.df %>% mutate(flight.dest = replace(flight.dest, which(flight.dest == 'EPMO'), 'WMI')) %>% mutate(flight.origin = replace(flight.origin, which(flight.origin == 'EPMO'), 'WMI'))
+
+#now merge this data frame with the data frame of airports, their official names and coordinates
+airport.reference <- read.csv('airports.csv', header = F) #loading the data
+colnames(airport.reference) <- c('airport.id', 'name', 'city', 'country', 'iata', 'icao', 'lat', 'long', 'alt', 'tmz', 'dst', 'tzd')
+airport.reference <- airport.reference %>% select(2:5, 7:8)
+
+#add missing Tuzla Airport
+tuzla <- data.frame(name = 'Tuzla', city = 'Tuzla', country = 'Bosnia & Herzegovina', iata = 'TZL', lat = 44.4586, long = 18.7247)
+airport.reference <- bind_rows(airport.reference, tuzla)
+
+master.df <- left_join(master.df, airport.reference, by = c('flight.origin'='iata'))
+master.df <- left_join(master.df, airport.reference, by = c('flight.dest'='iata'))
+
+master.df <- master.df %>% select(-1) #get rid of the row index
+
+colnames(master.df) <- c('flight.date', 'fl.num', 'origin', 'dest', 'dep.time', 'arr.time', 'equipment', 'weekday', 'dep.airport', 'dep.city', 'dep.country', 'dep.lat', 'dep.long', 'arr.airport', 'arr.city', 'arr.country', 'arr.lat', 'arr.long')
+
+#this goes into the folder with our app
+write.csv(master.df, 'master-df.csv', row.names = FALSE)
+#-------#
+
+#Some preliminary analysis
 
