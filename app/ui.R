@@ -1,5 +1,4 @@
 library(shiny)
-library(dplyr)
 
 master.df <- read.csv('master-df.csv', header = T)
 
@@ -13,11 +12,18 @@ countries <-  sort(c("Poland", "Hungary", "Latvia", "Czech Republic", "Romania",
 shinyUI(navbarPage("I'd like to",
   tabPanel("Analyze countries",
            
+          sidebarPanel(
+           
             selectInput('country', label = 'Select the country you would like to look at', 
                            choices = countries),
   
             sliderInput('day.range', 'How many days would you like to look at?', min = 1, max = 7, value = c(0,7)),
-            helpText('Please note that 1 represents a Monday, 2 - Tuesday, etc.')
+            helpText('Please note that 1 represents Monday, 2 - Tuesday, etc.')
+          ),
+          
+            mainPanel(
+           textOutput("country"))
+          
   ),
   
   
