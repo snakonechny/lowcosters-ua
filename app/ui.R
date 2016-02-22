@@ -1,7 +1,5 @@
 library(shiny)
 
-master.df <- read.csv('master-df.csv', header = T)
-
 countries <-  sort(c("Poland", "Hungary", "Latvia", "Czech Republic", "Romania", "Moldova", "Serbia", "Bosnia & Herzegovina", "Bulgaria", "Ukraine", "Slovakia", "Macedonia", "Lithuania", "Slovenia", "Estonia"))
 
 #airports <- c('TZL', 'LUZ', 'WMI', 'BZG', 'LCJ', 'VNO', 'KUN', 'RIX', 'IEV', 'TAT', 'KSC', 'BTS', 'INI', 'BEG', 'SKP', 'OHD', 'KIV', 'TSR', 'TGM', 'SBZ', 'OTP', 'IAS', 'CRA', 'CLJ', 'CND', 'BRQ', 'PRG', 'OSR', 'LJU', 'DEB', 'BUD', 'VAR', 'SOF', 'PDV', 'BOJ', 'WRO', 'WAW', 'SZZ', 'RZE', 'POZ', 'KTW', 'KRK', 'GDN', 'LTN', 'TLL')
@@ -16,14 +14,17 @@ shinyUI(navbarPage("I'd like to",
            
             selectInput('country', label = 'Select the country you would like to look at', 
                            choices = countries),
+          
+            radioButtons('mapOptions', label = 'On the map, show', choices = c('No labels' = 'none', 'City names' = 'cities', 'Country names' = 'countries'))
+            ),
   
-            sliderInput('day.range', 'How many days would you like to look at?', min = 1, max = 7, value = c(0,7)),
-            helpText('Please note that 1 represents Monday, 2 - Tuesday, etc.')
-          ),
+           # sliderInput('day.range', 'How many days would you like to look at?', min = 1, max = 7, value = c(0,7)),
+           # helpText('Please note that 1 represents Monday, 2 - Tuesday, etc.')
+         # ),
           
             mainPanel(
-           textOutput("country"))
-          
+           textOutput("intro"),
+           plotOutput("map"))
   ),
   
   
