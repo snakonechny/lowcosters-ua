@@ -1,4 +1,5 @@
 library(shiny)
+library(leaflet)
 
 countries <-  sort(c("Poland", "Hungary", "Latvia", "Czech Republic", "Romania", "Moldova", "Serbia", "Bosnia & Herzegovina", "Bulgaria", "Ukraine", "Slovakia", "Macedonia", "Lithuania", "Slovenia", "Estonia"))
 
@@ -10,21 +11,19 @@ countries <-  sort(c("Poland", "Hungary", "Latvia", "Czech Republic", "Romania",
 shinyUI(navbarPage("I'd like to",
   tabPanel("Analyze countries",
            
-          sidebarPanel(
+            leafletOutput('map.europe', height = 600),
            
-            selectInput('country', label = 'Select the country you would like to look at', 
-                           choices = countries),
+              fluidPage(style='padding-top: 60px;',
+                        absolutePanel(buttom = 20, top = 80, right = 20, width = 300, draggable = TRUE, wellPanel(
+                        
+                        h5('Selecting a country from the dropdown below refreshes the map; if airport-cities are geographically close to each other, they will be grouped into clusters colored in green. Click on each cluster to expand the airport markers.'),
+                        selectInput('country', label = NULL, choices = countries),
+                        h4(textOutput('intro'))
+                        
+              )
+                        )
+              )
           
-            radioButtons('mapOptions', label = 'On the map, show', choices = c('No labels' = 'none', 'City names' = 'cities', 'Country names' = 'countries'))
-            ),
-  
-           # sliderInput('day.range', 'How many days would you like to look at?', min = 1, max = 7, value = c(0,7)),
-           # helpText('Please note that 1 represents Monday, 2 - Tuesday, etc.')
-         # ),
-          
-            mainPanel(
-           textOutput("intro"),
-           plotOutput("map"))
   ),
   
   
