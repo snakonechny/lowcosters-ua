@@ -2,25 +2,28 @@ library(shiny)
 library(dplyr)
 library(leaflet)
 
-data <- read.csv('master-df.csv', header = T)
+data <- read.csv('master-flights.csv', header = T)
 
-map.eu <- map_data("world")
 
 shinyServer(function(input, output) {
   
   output$intro <- renderText({ 
     paste('For', input$country, 'there are', 
-          as.numeric(data %>% filter(arr.country == input$country) %>% select(fl.num) %>% summarize(n = n())), 'weekly scheduled flights')
+          as.numeric(data %>% filter(dest.country == input$country) %>% select(flight) %>% summarize(n = n())), 'weekly scheduled flights')
   })
   
   output$map.europe <- renderLeaflet({
-    destinations.bycountry <- data %>% filter(arr.country == input$country) %>% group_by(dep.city, dep.lat, dep.long) %>% summarize(count=n())
+    destinations.bycountry <- data %>% filter(dest.country == input$country) %>% group_by(origin.name, origin.city, origin.lat, origin.long) %>% summarize(count=n())
+    origins.bycountry <- data %>% filter(dest.country == input$country) %>% group_by(dest.name, dest.city, dest.lat, dest.long) %>% summarize(count=n())
+    
+    destPal <- colorNumeric(c('#FFBF00', '#DF0101'), destinations.bycountry$count)
+    #originPal <- colorNumeric(c('#5882FA', '#0040FF'), origins.bycountry$count)
 
-    colPal <- colorNumeric(c('#FFBF00', '#DF0101'), destinations.bycountry$count)
-
-    leaflet(data = destinations.bycountry) %>% addTiles() %>% setView(lat = 48.438186, lng = 14.972389, zoom = 4) %>% 
-      addCircleMarkers(lng = ~dep.long, lat = ~dep.lat, radius = 6, color = ~colPal(count), stroke = FALSE, fillOpacity = .8, popup = ~as.character(paste(dep.city, 'receives', count, 'flights weekly from', input$country, sep = ' ')), clusterOptions = markerClusterOptions()) %>%
-      addLegend('bottomright', pal = colPal, values = ~count, title = 'Number of flights') %>%
+    leaflet(data = destinations.bycountry) %>% addTiles() %>% setView(lat = 48.438186, lng = 22.972389, zoom = 4) %>% 
+      addCircleMarkers(lng = ~origin.long, lat = ~origin.lat, radius = 8, color = ~destPal(count), stroke = FALSE, fillOpacity = .8, popup = ~as.character(paste(origin.name, 'Airport in', origin.city, 'receives', count, 'flights weekly from', input$country, sep = ' ')), clusterOptions = markerClusterOptions(maxClusterRadius = input$radius)) %>%
+      addCircleMarkers(data = origins.bycountry, lng = ~dest.long, lat = ~dest.lat, radius = 8, color = '#0040FF', stroke = FALSE, fillOpacity = .8, popup = ~as.character(paste(count, 'weekly flights originate from', dest.city, 'in', input$country)), clusterOptions = markerClusterOptions(maxClusterRadius = 5)) %>%
+      addLegend('bottomright', pal = destPal, values = ~count, title = 'Number of arrivals') %>%
+      #addLegend('bottomleft', pal = originPal, values = origins.bycountry$count, title = 'Number of departures', labFormat = labelFormat()) %>%
       addProviderTiles('Thunderforest.Transport')
   })
   
