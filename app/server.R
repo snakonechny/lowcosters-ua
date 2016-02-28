@@ -1,5 +1,6 @@
 library(shiny)
 library(dplyr)
+library(googleVis)
 library(leaflet)
 
 data <- read.csv('master-flights.csv', header = T)
@@ -25,6 +26,13 @@ shinyServer(function(input, output) {
       addLegend('bottomright', pal = destPal, values = ~count, title = 'Number of arrivals') %>%
       #addLegend('bottomleft', pal = originPal, values = origins.bycountry$count, title = 'Number of departures', labFormat = labelFormat()) %>%
       addProviderTiles('Thunderforest.Transport')
+  })
+  
+  output$sankey <- renderGvis({
+      
+     data.sankey <- data %>% filter(airline == input$airline) %>% group_by(origin.city, origin.name, dest.city, dest.name, flight) %>% mutate(last.dgt = substr(flight, nchar(flight), nchar(flight))) %>% filter(as.numeric(last.dgt) %% 2 == 1) %>% summarize(as.numeric(weight = n()))
+  
+     gvisSankey(data.sankey, from = 'origin.city', to = 'dest.city', weight = 'weight')
   })
   
   })

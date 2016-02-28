@@ -1,4 +1,6 @@
 library(shiny)
+library(shinydashboard)
+library(dplyr)
 library(leaflet)
 
 countries <-  sort(c("Poland", "Hungary", "Latvia", "Czech Republic", "Romania", "Moldova", "Serbia", "Bosnia and Herzegovina", "Bulgaria", "Ukraine", "Slovakia", "Macedonia", "Lithuania", "Slovenia", "Estonia"))
@@ -8,17 +10,29 @@ countries <-  sort(c("Poland", "Hungary", "Latvia", "Czech Republic", "Romania",
 #names(airports) <- names
 
 
-shinyUI(navbarPage("I'd like to",
-  tabPanel('Analyze countries',
+ui <- dashboardPage(
+  
+  dashboardHeader(title = "Low Cost Analyzer"),
+  dashboardSidebar(disable = TRUE),
+  dashboardBody(
+    
+    tags$head(
+      tags$link(rel = "stylesheet", type = "text/css", href = "custom.css")),
+    
+  fluidRow(
+    tabBox('Select your analysis',
+           id = 'maintab', height = '100%', width = '100%',
            
-            leafletOutput('map.europe', height = 600),
+           tabPanel(id = 'countries', title = h4('Analyze countries'),
+           
+            leafletOutput('map.europe', height = 600, width = '100%'),
            
               fluidPage(style='padding-top: 60px;',
-                        absolutePanel(buttom = 20, top = 80, right = 20, width = 300, draggable = TRUE, wellPanel(
+                        absolutePanel(buttom = 0, top = 150, right = 20, width = 300, draggable = TRUE, wellPanel(
                         
-                        h5('Selecting a country from the dropdown below refreshes the map; if airport-cities are geographically close to each other, they will be grouped into clusters. You can change the radius around which a cluster is formed below.'),
+                        h5('Select country of origin from the dropdown below; if destinations are geographically close to each other, they will be grouped into clusters. You can change the radius around which a cluster is formed below.'),
                         selectInput('country', label = NULL, choices = countries),
-                        sliderInput('radius', label = h5('Select the radius; higher number = less detailed view'), min = 10, max = 130, value = 130, step = 2),
+                        sliderInput('radius', label = h5('Select the radius; higher number = less detailed view'), min = 1, max = 100, value = 100, step = 5),
                         h4(textOutput('intro'))
                         
               )
@@ -27,15 +41,24 @@ shinyUI(navbarPage("I'd like to",
           
   ),
 
-  navbarMenu("Analyze airlines",
-           tabPanel('Routes'),
-           tabPanel('Statistics')),
-           
-  tabPanel("Analyze airports")
-  
-
+  tabPanel(title = h4("Analyze airlines"),
+         id = 'airlines', height = '100%', width = '100%',
+            fluidPage(style='padding-top: 60px;',
+                    absolutePanel(buttom = 20, top = 80, right = 20, width = 300, draggable = TRUE, wellPanel(
+                      selectInput('airline', label = 'Select an airline to analyze', choices = (data %>% select(airline) %>% distinct() %>% as.list()))))
+                   )
   )
 )
+)
+)
+)
+           
+
+  # tabPanel("Analyze airports")
+  
+
+#  )
+#)
 
 
 
