@@ -12,3 +12,14 @@ html {
   height: 100%;
   width: 100%;
 }
+
+
+.checkbox {
+  margin-top: 0px;
+  margin-bottom: 0px;
+}
+
+.well {
+  padding: 15px;
+  margin-bottom: 5px;
+}

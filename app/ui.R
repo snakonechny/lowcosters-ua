@@ -12,7 +12,7 @@ countries <-  sort(c("Poland", "Hungary", "Latvia", "Czech Republic", "Romania",
 
 ui <- dashboardPage(
   
-  dashboardHeader(title = "Low Cost Analyzer"),
+  dashboardHeader(title = "Lowcoster Analyzer"),
   dashboardSidebar(disable = TRUE),
   dashboardBody(
     
@@ -20,8 +20,7 @@ ui <- dashboardPage(
       tags$link(rel = "stylesheet", type = "text/css", href = "custom.css")),
     
   fluidRow(
-    tabBox('Select your analysis',
-           id = 'maintab', height = '100%', width = '100%',
+    tabBox('Select your analysis', id = 'maintab', height = '100%', width = '100%',
            
            tabPanel(id = 'countries', title = h4('Analyze countries'),
            
@@ -35,19 +34,17 @@ ui <- dashboardPage(
                         sliderInput('radius', label = h5('Select the radius; higher number = less detailed view'), min = 1, max = 100, value = 100, step = 5),
                         h4(textOutput('intro'))
                         
-              )
-                        )
-              )
-          
+              )))
   ),
 
   tabPanel(title = h4("Analyze airlines"),
          id = 'airlines', height = '100%', width = '100%',
             fluidPage(style='padding-top: 60px;',
                     absolutePanel(buttom = 20, top = 80, right = 20, width = 300, draggable = TRUE, wellPanel(
-                      selectInput('airline', label = 'Select an airline to analyze', choices = (data %>% select(airline) %>% distinct() %>% as.list()))))
-                   )
-  )
+                      selectInput('airline', label = 'Select an airline to analyze', choices = (data %>% select(airline) %>% distinct() %>% as.list())),
+                      selectInput('view', label = 'Select a metrics to track', choices = list('Flight frequency', 'Flight distribution', 'Competition')),
+                      checkboxInput(inputId = 'marketType', label = 'View by foreign/domestic', value = FALSE, width = '400px')
+                    ))))
 )
 )
 )

@@ -17,24 +17,28 @@ shinyServer(function(input, output) {
     destinations.bycountry <- data %>% filter(dest.country == input$country) %>% group_by(origin.name, origin.city, origin.lat, origin.long) %>% summarize(count=n())
     origins.bycountry <- data %>% filter(dest.country == input$country) %>% group_by(dest.name, dest.city, dest.lat, dest.long) %>% summarize(count=n())
     
-    destPal <- colorNumeric(c('#FFBF00', '#DF0101'), destinations.bycountry$count)
-    #originPal <- colorNumeric(c('#5882FA', '#0040FF'), origins.bycountry$count)
+    destPal <- colorNumeric(c('#ffe559', '#dd4747'), destinations.bycountry$count)
 
     leaflet(data = destinations.bycountry) %>% addTiles() %>% setView(lat = 48.438186, lng = 22.972389, zoom = 4) %>% 
-      addCircleMarkers(lng = ~origin.long, lat = ~origin.lat, radius = 8, color = ~destPal(count), stroke = FALSE, fillOpacity = .8, popup = ~as.character(paste(origin.name, 'Airport in', origin.city, 'receives', count, 'flights weekly from', input$country, sep = ' ')), clusterOptions = markerClusterOptions(maxClusterRadius = input$radius)) %>%
-      addCircleMarkers(data = origins.bycountry, lng = ~dest.long, lat = ~dest.lat, radius = 8, color = '#0040FF', stroke = FALSE, fillOpacity = .8, popup = ~as.character(paste(count, 'weekly flights originate from', dest.city, 'in', input$country)), clusterOptions = markerClusterOptions(maxClusterRadius = 5)) %>%
+      addCircleMarkers(lng = ~origin.long, lat = ~origin.lat, radius = 8, color = ~destPal(count), stroke = FALSE, fillOpacity = .8, popup = ~as.character(paste(origin.name, 'Airport in', origin.city, 'receives', count, 'flights weekly from', input$country, sep = ' ')), clusterOptions = markerClusterOptions(maxClusterRadius = input$radius, 
+      iconCreateFunction=JS("function (cluster) {    
+      var childCount = cluster.getChildCount(); 
+      var c = ' marker-cluster-';  
+      if (childCount < 100) {  
+      c += 'large';  
+      } else if (childCount < 1000) {  
+      c += 'medium';  
+      } else { 
+      c += 'small';  
+      }    
+      return new L.DivIcon({ html: '<div><span>' + childCount + '</span></div>', className: 'marker-cluster' + c, iconSize: new L.Point(40, 40) });
+      }"))) %>%
+      addCircleMarkers(data = origins.bycountry, lng = ~dest.long, lat = ~dest.lat, radius = 8, color = '#2f576e', stroke = FALSE, fillOpacity = .8, popup = ~as.character(paste(count, 'weekly flights originate from', dest.city, 'in', input$country)), clusterOptions = markerClusterOptions(maxClusterRadius = 5)) %>%
       addLegend('bottomright', pal = destPal, values = ~count, title = 'Number of arrivals') %>%
       #addLegend('bottomleft', pal = originPal, values = origins.bycountry$count, title = 'Number of departures', labFormat = labelFormat()) %>%
-      addProviderTiles('Thunderforest.Transport')
-  })
-  
-  output$sankey <- renderGvis({
+      addProviderTiles('CartoDB.Positron')
       
-     data.sankey <- data %>% filter(airline == input$airline) %>% group_by(origin.city, origin.name, dest.city, dest.name, flight) %>% mutate(last.dgt = substr(flight, nchar(flight), nchar(flight))) %>% filter(as.numeric(last.dgt) %% 2 == 1) %>% summarize(as.numeric(weight = n()))
-  
-     gvisSankey(data.sankey, from = 'origin.city', to = 'dest.city', weight = 'weight')
   })
-  
   })
   
 #map <- ggplot() + 
