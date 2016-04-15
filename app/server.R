@@ -67,7 +67,7 @@ shinyServer(function(input, output) {
     if (input$view == 2) {
     
     countryData <- data %>% filter(airline == input$airline) %>% group_by(dest.country) %>% summarise(Flights = n()) 
-    gvisGeoChart(countryData, 'dest.country', colorvar = 'Flights', options = list(region = '150', height = 700, width = 850))
+    gvisGeoChart(countryData, 'dest.country', colorvar = 'Flights', options = list(region = '150', title = 'Distribution of Weekly Flights, by Country', height = 650, width = 'auto'))
       
     }
   })

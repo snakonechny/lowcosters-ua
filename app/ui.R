@@ -49,7 +49,9 @@ ui <- dashboardPage(
                       selectInput('view', label = 'Select a metrics to track', choices = list('Flight frequency' = 1, 'Flight distribution' = 2, 'Competition' = 3)),
                       selectInput('airline', label = 'Select an airline to analyze', choices = (data %>% select(airline) %>% distinct() %>% as.list())),
                       conditionalPanel(condition = "input.view == '1'",
-                      sliderInput('showTop', label = 'Select top N destinations to view', min = 2, max = 50, step = 1, value = 25))
+                      sliderInput('showTop', label = 'Select top N destinations to view', min = 2, max = 50, step = 1, value = 25)),
+                      conditionalPanel(condition = "input.view == '2'",
+                      h4('This map shows the distribution of weekly flights for any given airline.'))
                     ))))
 )
 )
