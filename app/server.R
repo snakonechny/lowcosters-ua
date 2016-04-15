@@ -2,8 +2,15 @@ library(shiny)
 library(dplyr)
 library(googleVis)
 library(leaflet)
+library(d3heatmap)
+library(googleVis)
 
 data <- read.csv('master-flights.csv', header = T)
+
+#do a bit of formatting
+
+data$date <- as.Date(data$date, format = ('%Y-%m-%d'))
+data$day <- format(data$date, '%A')
 
 
 shinyServer(function(input, output) {
@@ -19,6 +26,7 @@ shinyServer(function(input, output) {
     
     destPal <- colorNumeric(c('#ffe559', '#dd4747'), destinations.bycountry$count)
 
+    #function for coloring airport clusters credited to http://stackoverflow.com/questions/33600021/leaflet-for-r-how-to-customize-the-coloring-of-clusters
     leaflet(data = destinations.bycountry) %>% addTiles() %>% setView(lat = 48.438186, lng = 22.972389, zoom = 4) %>% 
       addCircleMarkers(lng = ~origin.long, lat = ~origin.lat, radius = 8, color = ~destPal(count), stroke = FALSE, fillOpacity = .8, popup = ~as.character(paste(origin.name, 'Airport in', origin.city, 'receives', count, 'flights weekly from', input$country, sep = ' ')), clusterOptions = markerClusterOptions(maxClusterRadius = input$radius, 
       iconCreateFunction=JS("function (cluster) {    
@@ -39,29 +47,35 @@ shinyServer(function(input, output) {
       addProviderTiles('CartoDB.Positron')
       
   })
+  
+    
+  output$heatmap <- renderD3heatmap({
+    
+    if (input$view == 1) {
+      
+    matrixDest <- data %>% filter(airline == input$airline) %>% group_by(day, dest.name) %>% summarize(n = n()) %>% spread(day, n) %>% mutate(total = rowSums(.[, 2:8])) %>% arrange(desc(total)) %>% slice(1:input$showTop)
+    matrixDest <- matrixDest[c('dest.name','Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday')]
+    rownames(matrixDest) <- matrixDest$dest.name
+    matrixDest$dest.name <- NULL
+    d3heatmap(matrixDest, dendrogram = 'none', colors = scales::col_bin('Oranges', domain = NULL, bins = 10), scale = 'column')
+
+    }
   })
   
-#map <- ggplot() + 
-  #geom_map(map=map.eu, data=map.eu, aes(x=long, y=lat, map_id=region), color="white", fill="#7f7f7f", size=0.2, alpha=1/4) + 
-  #coord_map(xlim = c(-20, 45), ylim = c(62, 30)) +
-  #geom_point(data = destinations.bycountry, aes(x=dep.long, y=dep.lat, size = count), color = 'red') +
-  #labs(size = 'Number of flights') + 
-  #geom_point(data = origins.bycountry, aes(x=arr.long, y=arr.lat, size = count), color = 'blue') + 
-  #theme_pander() +
-  #scale_color_manual(name = "NA") +
-  #xlab('') +
-  #ylab('')
+  output$countryMap <- renderGvis({
+    
+    if (input$view == 2) {
+    
+    countryData <- data %>% filter(airline == input$airline) %>% group_by(dest.country) %>% summarise(Flights = n()) 
+    gvisGeoChart(countryData, 'dest.country', colorvar = 'Flights', options = list(region = '150', height = 700, width = 850))
+      
+    }
+  })
+  
+  
+  })
 
-#print(map)
+
   
-#if (input$mapOptions == 'cities') {
-  
-#  map + 
-#    geom_text(data = destinations.bycountry, aes(x=dep.long, y=dep.lat, size = count, label = ifelse(count >= quantile(destinations.bycountry$count, .95), as.character(dep.city), '')), size = 5, vjust = .15, hjust = -.15)+
-#    geom_text(data = origins.bycountry, aes(x=arr.long, y=arr.lat, size = count, label = ifelse(count >= quantile(destinations.bycountry$count, .99), as.character(arr.city), '')), size = 5, vjust = -.15, hjust = -.15)
-  
-  #theme_map() +
-  #theme(strip.background=element_blank())
-#}
 
   
