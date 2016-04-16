@@ -1,5 +1,6 @@
 library(shiny)
 library(dplyr)
+library(tidyr)
 library(googleVis)
 library(leaflet)
 library(d3heatmap)
@@ -53,10 +54,10 @@ shinyServer(function(input, output) {
     
     if (input$view == 1) {
       
-    matrixDest <- data %>% filter(airline == input$airline) %>% group_by(day, dest.name) %>% summarize(n = n()) %>% spread(day, n) %>% mutate(total = rowSums(.[, 2:8])) %>% arrange(desc(total)) %>% slice(1:input$showTop)
-    matrixDest <- matrixDest[c('dest.name','Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday')]
-    rownames(matrixDest) <- matrixDest$dest.name
-    matrixDest$dest.name <- NULL
+    matrixDest <- data %>% filter(airline == input$airline) %>% group_by(day, dest.city) %>% summarize(n = n()) %>% spread(day, n) %>% mutate(total = rowSums(.[, 2:8])) %>% arrange(desc(total)) %>% slice(1:input$showTop)
+    matrixDest <- matrixDest[c('dest.city','Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday')]
+    rownames(matrixDest) <- matrixDest$dest.city
+    matrixDest$dest.city <- NULL
     d3heatmap(matrixDest, dendrogram = 'none', colors = scales::col_bin('Oranges', domain = NULL, bins = 10), scale = 'column')
 
     }
@@ -66,8 +67,8 @@ shinyServer(function(input, output) {
     
     if (input$view == 2) {
     
-    countryData <- data %>% filter(airline == input$airline) %>% group_by(dest.country) %>% summarise(Flights = n()) 
-    gvisGeoChart(countryData, 'dest.country', colorvar = 'Flights', options = list(region = '150', title = 'Distribution of Weekly Flights, by Country', height = 650, width = 'auto'))
+    countryData <- data %>% filter(airline == input$airline) %>% group_by(dest.country) %>% summarise(Flights = n()) %>% mutate(Percentage = round(.$Flights/sum(.$Flights, na.rm = FALSE)*100, digits = 2)) 
+    gvisGeoChart(countryData, 'dest.country', colorvar = 'Flights', hovervar = 'Percentage', options = list(region = '150', title = 'Distribution of Weekly Flights, by Country', height = 650, width = 'auto'))
       
     }
   })

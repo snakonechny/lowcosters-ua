@@ -2,6 +2,7 @@ library(shiny)
 library(shinydashboard)
 library(dplyr)
 library(leaflet)
+library(d3heatmap)
 library(googleVis)
 
 countries <-  sort(c("Poland", "Hungary", "Latvia", "Czech Republic", "Romania", "Moldova", "Serbia", "Bosnia and Herzegovina", "Bulgaria", "Ukraine", "Slovakia", "Macedonia", "Lithuania", "Slovenia", "Estonia"))
@@ -45,7 +46,7 @@ ui <- dashboardPage(
             
            
             fluidPage(style='padding-top: 60px;',
-                    absolutePanel(buttom = 20, top = 140, right = 5, width = 300, draggable = TRUE, wellPanel(
+                    absolutePanel(buttom = 20, top = 140, right = 195, width = 300, draggable = TRUE, wellPanel(
                       selectInput('view', label = 'Select a metrics to track', choices = list('Flight frequency' = 1, 'Flight distribution' = 2, 'Competition' = 3)),
                       selectInput('airline', label = 'Select an airline to analyze', choices = (data %>% select(airline) %>% distinct() %>% as.list())),
                       conditionalPanel(condition = "input.view == '1'",
