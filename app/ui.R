@@ -41,19 +41,22 @@ ui <- dashboardPage(
 
   tabPanel(title = h4("Analyze airlines"), id = 'airlines', height = '100%', width = '100%',
            
-            htmlOutput(outputId = "countryMap"),
-            d3heatmapOutput(outputId = 'heatmap', height = 700, width = 850),
+           conditionalPanel(condition = "input.view == '2'",
+            box(title = 'Flight Count and Percentage of all Flights, per Country', htmlOutput(outputId = 'countryMap'), width = 5, height = 500),
+            box(title = 'Top 10 City Pairs, by Weekly Frequency', htmlOutput(outputId = 'sankey'), width = 7, height = 500)),
+           
+            d3heatmapOutput(outputId = 'heatmap', height = 700, width = 800),
             
+            htmlOutput(outputId = 'treeMap', width = 12, height = 500),
            
             fluidPage(style='padding-top: 60px;',
                     absolutePanel(buttom = 20, top = 140, right = 195, width = 300, draggable = TRUE, wellPanel(
                       selectInput('view', label = 'Select a metrics to track', choices = list('Flight frequency' = 1, 'Flight distribution' = 2, 'Competition' = 3)),
-                      selectInput('airline', label = 'Select an airline to analyze', choices = (data %>% select(airline) %>% distinct() %>% as.list())),
+                      selectInput('airline', label = 'Select an airline to analyze', choices = levels(as.factor(data$airline))),
                       conditionalPanel(condition = "input.view == '1'",
                       sliderInput('showTop', label = 'Select top N destinations to view', min = 2, max = 50, step = 1, value = 25)),
                       conditionalPanel(condition = "input.view == '2'",
-                      h4('This map shows the distribution of weekly flights for any given airline.'))
-                    ))))
+                      h4('This map shows the distribution of weekly flights for any given airline.'))))))
 )
 )
 )

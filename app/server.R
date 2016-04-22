@@ -13,6 +13,14 @@ data <- read.csv('master-flights.csv', header = T)
 data$date <- as.Date(data$date, format = ('%Y-%m-%d'))
 data$day <- format(data$date, '%A')
 
+#standardize Milan as "Milano"
+data$origin.city[data$origin.city == 'Milan'] <- 'Milano'
+data$dest.city[data$dest.city == 'Milan'] <- 'Milano'
+
+#compute a "reference dictionary of airlines' operations
+#destAirline.count <- data %>% group_by(dest.city, airline) %>% summarize(n = n()) %>% spread(airline, n) %>% ungroup() %>% mutate(airlines = apply(.[,2:8], 1, function(x) sum(!(is.na(x)))), totalFlights = rowSums(.[,2:8], na.rm = TRUE)) %>% select(1, 9:10)
+
+
 
 shinyServer(function(input, output) {
   
@@ -68,11 +76,51 @@ shinyServer(function(input, output) {
     if (input$view == 2) {
     
     countryData <- data %>% filter(airline == input$airline) %>% group_by(dest.country) %>% summarise(Flights = n()) %>% mutate(Percentage = round(.$Flights/sum(.$Flights, na.rm = FALSE)*100, digits = 2)) 
-    gvisGeoChart(countryData, 'dest.country', colorvar = 'Flights', hovervar = 'Percentage', options = list(region = '150', title = 'Distribution of Weekly Flights, by Country', height = 650, width = 'auto'))
-      
-    }
-  })
+    gvisGeoChart(countryData, locationvar = 'dest.country', colorvar = 'Flights', hovervar = 'dest.country', sizevar = 'Percentage', options = list(region = '150', height = 450, width = 500))
+    }})
   
+  output$sankey <- renderGvis({
+    
+    if (input$view == 2) {
+    
+    cityPairs <- data %>% filter(airline == input$airline) %>% select(origin.city, dest.city) %>% data.frame(t(apply(., 1, sort))) %>% select(X1, X2) %>% group_by(X1, X2) %>% summarise(Flights = n()) %>% ungroup() %>% arrange(desc(Flights)) %>% slice(1:10)
+    gvisSankey(cityPairs, from = 'X1', to = 'X2', weight = 'Flights', options = list(height = 450, width = 400, sankey = "{node: {nodePadding: '25'}}, {link: {color: {fillOpacity: '.5'}}}"))
+    
+    }})
+  
+  output$treeMap <- renderGvis({
+    
+    if (input$view == 3) {
+    
+    destAirline.count <- data %>% group_by(dest.city, airline) %>% summarize(n = n()) %>% spread(airline, n) %>% ungroup() %>% mutate(airlines = apply(.[,2:8], 1, function(x) sum(!(is.na(x)))), totalFlights = rowSums(.[,2:8], na.rm = TRUE)) %>% select(1, 9:10)
+      
+    compCity <- data %>% filter(airline == input$airline) %>% group_by(dest.city) %>% summarise(flights = n())
+      
+    #match the compCity df with the master list of airports
+    compCity <<- left_join(destAirline.count, compCity) %>% filter(complete.cases(.))
+      
+    compCity$category[compCity$airlines == 1] <- 'One airline'
+    compCity$category[compCity$airlines == 2] <- 'Two airlines'
+    compCity$category[compCity$airlines == 3] <- 'Three airlines'
+    compCity$category[compCity$airlines == 4] <- 'Four airlines'
+    compCity$category[compCity$airlines == 5] <- 'Five airlines'
+    compCity$category[compCity$airlines == 6] <- 'Six airlines'
+    compCity$category[compCity$airlines == 7] <- 'Seven airlines'
+      
+    
+    totals <<- data.frame(dest.city = 'All cities', airlines = 6, totalFlights = sum(compCity$totalFlights), flights = sum(compCity$flights), category = NA)
+    totals$dest.city <<- as.character(totals$dest.city)
+    totals.parents <<- compCity %>% group_by(category) %>% summarize(airlines = 7, totalFlights = sum(.$totalFlights), flights = sum(.$flights), dest.city = 'All cities') %>% select(5, 2, 3, 4, 1)
+    colnames(totals.parents) <<- c('category', 'airlines', 'totalFlights', 'flights', 'dest.city')
+    
+    compCity <- bind_rows(compCity, totals, totals.parents)
+    compCity$category[compCity$category == 'NA'] <- NA
+    
+    gvisTreeMap(compCity, idvar = "dest.city", parentvar = "category", sizevar = "totalFlights", colorvar = "flights", options = list(fontSize = 16, minColor = '#fff7bc', midColor = '#fec44f', maxColor = '#d95f0e', showScale = TRUE))
+    
+    }
+    
+  })
   
   })
 
